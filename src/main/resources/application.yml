@@ -1,0 +1,71 @@
+server:
+  port: 81
+  servlet:
+    context-path: /myeureka
+
+security:
+  oauth2:
+    client:
+      client-id: 1038562819623-fb54nqlsnumsv8jcpne071f9a8ginaq5.apps.googleusercontent.com
+      client-secret: 1vDwCjEgaFkr1aDD1dYvsCal
+      access-token-uri: https://www.googleapis.com/oauth2/v4/token
+      user-authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+      scope:
+        - openid
+        - profile
+        - email
+    resource:
+      user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+
+
+
+zuul:
+  routes:
+    #For local services we have to use ribbon which is defined after service id
+    myuser:
+      path: /myusers/**
+      serviceId: myusers-service
+      stripPrefix: true
+    myanotheruser:
+      path: /myanotheruser/**
+      serviceId: myusers-another-service
+      stripPrefix: true
+    # For Eureka Server we just need to tell the service id from eureka server
+    myeurekauser:
+      path: /myeurekauser/**
+      serviceId: end-consumer
+      stripPrefix: true
+
+hystrix:
+  command:
+    myusers-service:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: ...
+
+myusers-service:
+  ribbon:
+    NIWSServerListClassName: com.netflix.loadbalancer.ConfigurationBasedServerList
+    listOfServers: http://localhost:8091 #Here we give the redirecting url, it is working in local host
+    ConnectTimeout: 1000
+    ReadTimeout: 3000
+    MaxTotalHttpConnections: 500
+    MaxConnectionsPerHost: 100
+
+myusers-another-service:
+  ribbon:
+    NIWSServerListClassName: com.netflix.loadbalancer.ConfigurationBasedServerList
+    listOfServers: http://localhost:8081 #Here we give the redirecting url, it is working in local host
+    ConnectTimeout: 1000
+    ReadTimeout: 3000
+    MaxTotalHttpConnections: 500
+    MaxConnectionsPerHost: 100
+
+eureka:
+  client:
+    registerWithEureka: true
+    fetchRegistry: true
+    serviceUrl:
+      defaultZone: http://localhost:8065/eureka/
+
